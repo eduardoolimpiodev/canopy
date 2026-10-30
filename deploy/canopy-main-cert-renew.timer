@@ -1,0 +1,11 @@
+[Unit]
+Description=Verificar renovacao HTTPS do dominio principal Canopy
+
+[Timer]
+OnCalendar=*-*-* 00,12:00:00
+RandomizedDelaySec=30min
+Persistent=true
+Unit=canopy-main-cert-renew.service
+
+[Install]
+WantedBy=timers.target

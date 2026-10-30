@@ -39,6 +39,8 @@ Abra `http://localhost:4312`. A origem inclui a porta; outro endereço exige con
 
 ## Produção
 
+O domínio canônico atual é `https://canopyworkbench.com`, configurado em `APP_ORIGIN` na VPS. O vhost `nginx.canopyworkbench.conf` atende a aplicação e redireciona www. `nginx.canopy-app.conf` preserva o desafio ACME do domínio antigo e redireciona seu tráfego para o principal. O serviço `canopy-main-cert-renew.service` e seu timer renovam e verificam o novo certificado; o renovador antigo continua ativo para o domínio de redirecionamento. O `.com.br` depende de corrigir a falha de registro informada pela HostGator. A descrição abaixo registra a implantação anterior à troca de domínio.
+
 O serviço está publicado em https://canopy.eduardoolimpio.com/. A configuração privada define `NODE_ENV=production`, `APP_ORIGIN=https://canopy.eduardoolimpio.com`, `MAIL_MODE=smtp` e `TRUSTED_PROXY_CIDRS=172.18.0.4`, o IP observado do proxy. Produção rejeita HTTP, e-mail em arquivo e exceções de rede MongoDB privada. A confirmação das contas existentes continua exigindo link válido e senha; novos cadastros, recuperação e reenvio estão habilitados.
 
 `production.compose.env` aponta para a imagem imutável registrada em [STATUS.md](STATUS.md), `CANOPY_ENV_FILE=/opt/canopy/shared/production.app.env` e `CANOPY_BIND_PORT=4313`. A ativação usa os dois manifestos:

@@ -5,9 +5,12 @@ import socket
 import ssl
 import subprocess
 import time
+import argparse
 
 
-DOMAIN = "canopy.eduardoolimpio.com"
+parser = argparse.ArgumentParser()
+parser.add_argument("domain", nargs="?", default="canopy.eduardoolimpio.com", choices=["canopy.eduardoolimpio.com", "canopyworkbench.com"])
+DOMAIN = parser.parse_args().domain
 CERTIFICATE = pathlib.Path("/etc/letsencrypt/live") / DOMAIN / "cert.pem"
 
 
