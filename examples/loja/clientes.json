@@ -1,0 +1,23 @@
+[
+  {
+    "_id": { "$oid": "671000000000000000000001" },
+    "nome": "Ana Souza",
+    "email": "ana@example.test",
+    "cidade": "São Paulo",
+    "ativo": true
+  },
+  {
+    "_id": { "$oid": "671000000000000000000002" },
+    "nome": "Bruno Lima",
+    "email": "bruno@example.test",
+    "cidade": "Curitiba",
+    "ativo": true
+  },
+  {
+    "_id": { "$oid": "671000000000000000000003" },
+    "nome": "Carla Reis",
+    "email": "carla@example.test",
+    "cidade": "Recife",
+    "ativo": false
+  }
+]

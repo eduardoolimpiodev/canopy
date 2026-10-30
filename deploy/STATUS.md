@@ -1,5 +1,7 @@
 # Estado da implantação — 30/10/2026
 
+Atualização `20261030-explorer` publicada com imagem `sha256:fbb5c4d815d57a10453ed8e1da09cea91ed6719198f545c3ec7b451b99ec4c4d`. Inclui perfil, árvore, diagrama, leitor offline e acesso visitante em `/#/visitante`. A leitura como visitante é somente local, temporária e sem operações MongoDB remotas. Login salva conexões e consultas; arquivos offline permanecem temporários em todos os modos. A prova no domínio público abriu o exemplo gzip com clientes e pedidos. Build, lint dos arquivos tocados e quatro testes focados passaram. Archive real gerado pelo mongodump ainda exige validação. Backup anterior à atualização em `/app/data/before-explorer.sqlite`, no volume do Canopy, e configuração de retorno em `/opt/canopy/shared/production.compose.before-explorer.env`. O quadro abaixo documenta a instalação anterior.
+
 **Feito e verificado:** aplicação em https://canopy.eduardoolimpio.com/ na VPS `143.95.209.222`, com HTTPS válido, login e workspace. Cadastro e confirmação por e-mail via Titan estão habilitados; o fluxo completo foi verificado em produção.
 
 | Item                 | Estado observado                                                                                                |

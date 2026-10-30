@@ -1,5 +1,6 @@
 import { ChevronDown, Pencil, Search, Trash2 } from 'lucide-react';
 import type { QueryResult } from './api.js';
+import { DocumentTree, SchemaDiagram, type DataView } from './DataViews.js';
 
 function formatCell(value: unknown): string {
   if (value === undefined) return '—';
@@ -21,7 +22,7 @@ function cellClass(column: string, value: unknown) {
 
 interface Props {
   result: QueryResult | null;
-  view: 'json' | 'table';
+  view: DataView;
   skip: number;
   writable: boolean;
   disabled: boolean;
@@ -56,6 +57,13 @@ export function Results({ result, view, skip, writable, disabled, onEdit, onDele
       <pre className="json-results" tabIndex={0} aria-label="Documentos em JSON">
         {JSON.stringify(result.documents, null, 2)}
       </pre>
+    );
+  if (view === 'tree') return <DocumentTree documents={result.documents} skip={skip} />;
+  if (view === 'diagram')
+    return (
+      <SchemaDiagram
+        collections={[{ name: 'Resultado da consulta', documents: result.documents }]}
+      />
     );
   const allColumns = [...new Set(result.documents.flatMap((document) => Object.keys(document)))];
   const columns = allColumns.slice(0, 16);

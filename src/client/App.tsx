@@ -38,6 +38,8 @@ import {
   type User,
 } from './api.js';
 import { Results } from './Results.js';
+import { OfflinePanel } from './OfflinePanel.js';
+import { CollectionBranch, ViewSelector, type DataView } from './DataViews.js';
 import {
   AccountPanel,
   readAccountLink,
@@ -255,7 +257,6 @@ function AuthScreen({
       <section className="auth-form-panel">
         <div className="auth-top">
           <span>MongoDB workbench</span>
-          <span className="version-tag">PRÉVIA · v0.1</span>
         </div>
         <div className="auth-form-wrap">
           <div className="auth-icon">
@@ -373,6 +374,9 @@ function AuthScreen({
             </a>
           </p>
           <div className="auth-note">
+            <a className="guest-entry" href="#/visitante">
+              Explorar arquivos como visitante <ArrowRight size={16} />
+            </a>
             <LockKeyhole size={16} />
             <p>
               Suas conexões pertencem à sua conta. Credenciais de banco são armazenadas com
@@ -546,6 +550,7 @@ function DocumentModal({
 const initialQuery: Query = { mode: 'find', text: '{}', sort: '{}', limit: 50, skip: 0 };
 
 function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () => void }) {
+  const [offline, setOffline] = useState(false);
   const [user, setProfileUser] = useState(initialUser);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedId, setSelectedId] = useState('');
@@ -559,7 +564,7 @@ function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () =
   const [pendingSaved, setPendingSaved] = useState<SavedQuery | null>(null);
   const [result, setResult] = useState<QueryResult | null>(null);
   const [resultContext, setResultContext] = useState('');
-  const [view, setView] = useState<'table' | 'json'>('table');
+  const [view, setView] = useState<DataView>('table');
   const [tab, setTab] = useState<'documents' | 'indexes'>('documents');
   const [indexes, setIndexes] = useState<unknown[] | null>(null);
   const [error, setError] = useState('');
@@ -837,7 +842,6 @@ function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () =
       <aside className="sidebar" aria-label="Conexões e consultas">
         <div className="sidebar-brand">
           <Brand />
-          <span className="version-tag">BETA</span>
         </div>
         <div className="sidebar-heading">
           <span>CONEXÕES</span>
@@ -884,50 +888,52 @@ function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () =
         </div>
         {selected ? (
           <>
-            <label className="database-select">
-              <Database size={15} />
-              <select
-                aria-label="Banco de dados"
-                value={database}
-                onChange={(event) => setDatabase(event.target.value)}
-              >
-                <option value="">Selecione um banco</option>
-                {databases.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-            {database && (
-              <>
-                <div className="collection-search">
-                  <Search size={14} />
-                  <input
-                    aria-label="Buscar coleção"
-                    placeholder="Buscar coleção…"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                  />
-                </div>
-                <div className="collection-list">
-                  {collections
-                    .filter((item) => item.toLowerCase().includes(search.toLowerCase()))
-                    .map((item) => (
-                      <button
-                        key={item}
-                        className={`collection-item ${collection === item ? 'selected' : ''}`}
-                        onClick={() => setCollection(item)}
-                      >
-                        <Table2 size={15} />
-                        <span>{item}</span>
-                        {collection === item && <ChevronRight size={14} />}
-                      </button>
-                    ))}
-                  {!loadingTree && !collections.length && (
-                    <p className="sidebar-empty">Nenhuma coleção disponível.</p>
+            <nav aria-label="Árvore de bancos e coleções">
+              {databases.map((item) => (
+                <CollectionBranch
+                  key={item}
+                  name={item}
+                  selected={database === item}
+                  onSelect={() => setDatabase(item)}
+                >
+                  {database === item && (
+                    <>
+                      {database && (
+                        <>
+                          <div className="collection-search">
+                            <Search size={14} />
+                            <input
+                              aria-label="Buscar coleção"
+                              placeholder="Buscar coleção…"
+                              value={search}
+                              onChange={(event) => setSearch(event.target.value)}
+                            />
+                          </div>
+                          <div className="collection-list">
+                            {collections
+                              .filter((item) => item.toLowerCase().includes(search.toLowerCase()))
+                              .map((item) => (
+                                <button
+                                  key={item}
+                                  className={`collection-item ${collection === item ? 'selected' : ''}`}
+                                  onClick={() => setCollection(item)}
+                                >
+                                  <Table2 size={15} />
+                                  <span>{item}</span>
+                                  {collection === item && <ChevronRight size={14} />}
+                                </button>
+                              ))}
+                            {!loadingTree && !collections.length && (
+                              <p className="sidebar-empty">Nenhuma coleção disponível.</p>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </>
                   )}
-                </div>
-              </>
-            )}
+                </CollectionBranch>
+              ))}
+            </nav>
           </>
         ) : (
           <p className="sidebar-empty">
@@ -993,7 +999,6 @@ function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () =
             )}
           </div>
           <div className="topbar-actions">
-            <span className="preview-label">PRÉVIA DE DESENVOLVIMENTO</span>
             <button
               className="icon-button"
               aria-label="Sair"
@@ -1069,14 +1074,14 @@ function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () =
                     Nova conexão <ArrowRight size={16} />
                   </span>
                 </button>
-                <div className="start-card">
+                <button className="start-card" onClick={() => setOffline(true)}>
                   <span className="card-icon">
                     <TerminalSquare size={22} />
                   </span>
-                  <h3>Consultas com contexto</h3>
-                  <p>Explore documentos com filtros, ordenação e agregações em JSON.</p>
-                  <span className="card-caption">Selecione uma coleção para começar</span>
-                </div>
+                  <h3>Analisar arquivo local</h3>
+                  <p>Abra exportações JSON e dumps MongoDB diretamente no navegador.</p>
+                  <span className="card-caption">Escolher arquivo →</span>
+                </button>
                 <div className="start-card">
                   <span className="card-icon">
                     <ShieldCheck size={22} />
@@ -1290,22 +1295,7 @@ function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () =
                     >
                       <Download size={15} /> Exportar página
                     </button>
-                    <div className="view-switch">
-                      <button
-                        aria-label="Visualizar tabela"
-                        className={view === 'table' ? 'active' : ''}
-                        onClick={() => setView('table')}
-                      >
-                        <Table2 size={16} />
-                      </button>
-                      <button
-                        aria-label="Visualizar JSON"
-                        className={view === 'json' ? 'active' : ''}
-                        onClick={() => setView('json')}
-                      >
-                        <Braces size={16} />
-                      </button>
-                    </div>
+                    <ViewSelector value={view} onChange={setView} />
                   </div>
                 </div>
                 <div className="results-content">
@@ -1373,6 +1363,15 @@ function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () =
           </>
         )}
       </main>
+      {offline && (
+        <Modal
+          title="Análise offline"
+          subtitle="Seus arquivos, no seu navegador."
+          onClose={() => setOffline(false)}
+        >
+          <OfflinePanel onClose={() => setOffline(false)} view={view} onViewChange={setView} />
+        </Modal>
+      )}
       {showAccount && (
         <Modal
           title="Minha conta"
@@ -1407,12 +1406,17 @@ function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () =
 }
 
 export function App() {
+  const [guest, setGuest] = useState(window.location.hash === '#/visitante');
+  const [guestView, setGuestView] = useState<DataView>('table');
   const [link, setLink] = useState(readAccountLink);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
-    const changed = () => setLink(readAccountLink());
+    const changed = () => {
+      setLink(readAccountLink());
+      setGuest(window.location.hash === '#/visitante');
+    };
     window.addEventListener('hashchange', changed);
     return () => window.removeEventListener('hashchange', changed);
   }, []);
@@ -1444,6 +1448,40 @@ export function App() {
     };
   }, [link]);
   if (link) return <RecoveryScreen key={link.token} link={link} />;
+  if (guest)
+    return (
+      <main className="guest-workspace">
+        <header className="guest-header">
+          <Brand />
+          <nav>
+            <a className="text-button" href="#/entrar">
+              Entrar
+            </a>
+            <a className="guest-signup" href="#/criar-conta">
+              Criar conta
+            </a>
+          </nav>
+        </header>
+        <div className="guest-notice" role="status">
+          <ShieldCheck size={20} />
+          <div>
+            <strong>Você está explorando como visitante</strong>
+            <p>
+              As coleções importadas são temporárias e serão descartadas ao sair ou atualizar a
+              página. Crie uma conta e entre para salvar suas conexões MongoDB e consultas. A
+              análise de arquivos locais é temporária em todos os modos.
+            </p>
+          </div>
+        </div>
+        <OfflinePanel
+          view={guestView}
+          onViewChange={setGuestView}
+          onClose={() => {
+            window.location.hash = '#/entrar';
+          }}
+        />
+      </main>
+    );
   if (loading)
     return (
       <div className="loading-page">

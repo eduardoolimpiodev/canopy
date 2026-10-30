@@ -50,6 +50,8 @@ try {
       'tests/accounts.test.ts',
       'tests/mail.test.ts',
       'tests/provision.test.ts',
+      'tests/offline.test.ts',
+      'tests/data-views.test.ts',
     ],
     {
       stdio: 'inherit',

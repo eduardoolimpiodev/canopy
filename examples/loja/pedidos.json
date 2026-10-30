@@ -1,0 +1,26 @@
+[
+  {
+    "_id": { "$oid": "672000000000000000000001" },
+    "clienteId": { "$oid": "671000000000000000000001" },
+    "status": "pago",
+    "total": 249.9,
+    "criadoEm": { "$date": "2026-10-01T14:00:00Z" },
+    "itens": [{ "produto": "Teclado", "quantidade": 1, "preco": 249.9 }]
+  },
+  {
+    "_id": { "$oid": "672000000000000000000002" },
+    "clienteId": { "$oid": "671000000000000000000002" },
+    "status": "pendente",
+    "total": 179.8,
+    "criadoEm": { "$date": "2026-10-02T10:30:00Z" },
+    "itens": [{ "produto": "Mouse", "quantidade": 2, "preco": 89.9 }]
+  },
+  {
+    "_id": { "$oid": "672000000000000000000003" },
+    "clienteId": { "$oid": "671000000000000000000001" },
+    "status": "enviado",
+    "total": 899,
+    "criadoEm": { "$date": "2026-10-03T16:45:00Z" },
+    "itens": [{ "produto": "Monitor", "quantidade": 1, "preco": 899 }]
+  }
+]
