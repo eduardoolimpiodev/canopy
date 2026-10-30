@@ -545,7 +545,8 @@ function DocumentModal({
 
 const initialQuery: Query = { mode: 'find', text: '{}', sort: '{}', limit: 50, skip: 0 };
 
-function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
+function Workspace({ user: initialUser, onLogout }: { user: User; onLogout: () => void }) {
+  const [user, setProfileUser] = useState(initialUser);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [databases, setDatabases] = useState<string[]>([]);
@@ -1378,7 +1379,7 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
           subtitle="Acesso, atividade e dados da conta"
           onClose={() => setShowAccount(false)}
         >
-          <AccountPanel user={user} onDeleted={onLogout} />
+          <AccountPanel user={user} onDeleted={onLogout} onUpdated={setProfileUser} />
         </Modal>
       )}
       {showConnection && (

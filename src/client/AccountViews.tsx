@@ -267,7 +267,35 @@ interface Activity {
   status: number;
   createdAt: number;
 }
-export function AccountPanel({ user, onDeleted }: { user: User; onDeleted: () => void }) {
+export function AccountPanel({
+  user,
+  onDeleted,
+  onUpdated,
+}: {
+  user: User;
+  onDeleted: () => void;
+  onUpdated?: (user: User) => void;
+}) {
+  const [profile, setProfile] = useState(user);
+  const [name, setName] = useState(user.name);
+  const [avatar, setAvatar] = useState(user.avatar ?? null);
+  const [saved, setSaved] = useState('');
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
+    setSaved('');
+    try {
+      const result = await api<{ user: User }>('/account/profile', 'PATCH', { name, avatar });
+      setProfile(result.user);
+      onUpdated?.(result.user);
+      setSaved('Perfil salvo.');
+    } catch (failure) {
+      setError(message(failure));
+    } finally {
+      setBusy(false);
+    }
+  }
   const [events, setEvents] = useState<Activity[]>([]);
   const [before, setBefore] = useState<number | null>(null);
   const [error, setError] = useState('');
@@ -324,45 +352,140 @@ export function AccountPanel({ user, onDeleted }: { user: User; onDeleted: () =>
   }
   return (
     <div className="account-panel">
-      <p>
-        <strong>{user.name}</strong>
-        <br />
-        {user.email} · {user.emailVerified ? 'E-mail confirmado' : 'Confirmação pendente'}
-      </p>
-      <h3>Atividade da conta</h3>
-      <p>
-        Até 1.000 eventos dos últimos 30 dias. Consultas, documentos, senhas e URIs não entram neste
-        histórico.
-      </p>
       {error && (
         <p className="error-banner" role="alert">
           {error}
         </p>
       )}
-      <ol className="activity-list" aria-label="Atividade da conta" tabIndex={0}>
-        {events.map((event) => (
-          <li key={event.id}>
-            <time dateTime={new Date(event.createdAt).toISOString()}>
-              {new Date(event.createdAt).toLocaleString('pt-BR')}
-            </time>
-            <code>
-              {event.action && `${event.action} · `}
-              {event.method} {event.route}
-            </code>
-            {event.databaseName && (
+      <form className="account-form" onSubmit={saveProfile}>
+        <div className="profile-summary">
+          <div className="profile-avatar">
+            {avatar ? (
+              <img src={avatar} alt="Foto do perfil" width={80} height={80} />
+            ) : (
               <span>
-                {event.databaseName} / {event.collectionName}
+                {profile.name
+                  .split(' ')
+                  .map((part) => part[0])
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase()}
               </span>
             )}
-            <span>HTTP {event.status}</span>
-          </li>
-        ))}
-      </ol>
-      {before && (
-        <button className="secondary" disabled={busy} onClick={more}>
-          Carregar eventos anteriores
+          </div>
+          <div>
+            <h3>{profile.name}</h3>
+            <p>{user.email}</p>
+            <span className="profile-status">
+              {user.emailVerified ? '✓ E-mail confirmado' : 'Confirmação pendente'}
+            </span>
+          </div>
+        </div>
+        <div className="profile-section-title">INFORMAÇÕES PESSOAIS</div>
+        <label>
+          Nome
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            minLength={2}
+            maxLength={60}
+            autoComplete="name"
+            required
+          />
+        </label>
+        <label className="profile-upload">
+          <span>Alterar foto</span>
+          <small>PNG, JPEG ou WebP · até 64 KB</small>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              setSaved('');
+              if (
+                file.size > 65536 ||
+                !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)
+              ) {
+                setError('Escolha uma imagem PNG, JPEG ou WebP de até 64 KB.');
+                event.target.value = '';
+                return;
+              }
+              const reader = new FileReader();
+              reader.onload = () => {
+                setAvatar(String(reader.result));
+                setError('');
+              };
+              reader.onerror = () => setError('Não foi possível ler a imagem.');
+              reader.readAsDataURL(file);
+            }}
+          />
+        </label>
+        {avatar && (
+          <button type="button" className="secondary" onClick={() => setAvatar(null)}>
+            Remover foto
+          </button>
+        )}
+        <div className="profile-save">
+          <span>Seu perfil, do seu jeito.</span>
+          <button className="profile-primary" disabled={busy}>
+            {busy ? 'Salvando…' : 'Salvar alterações'}
+          </button>
+        </div>
+        {saved && <p role="status">{saved}</p>}
+      </form>
+      <div className="profile-session">
+        <div>
+          <strong>Sessão atual</strong>
+          <p>Conectado com sua conta Canopy.</p>
+        </div>
+        <button
+          className="secondary"
+          onClick={async () => {
+            try {
+              await api('/auth/logout', 'POST');
+              onDeleted();
+            } catch (failure) {
+              setError(message(failure));
+            }
+          }}
+        >
+          Sair da conta
         </button>
-      )}
+      </div>
+      <details className="profile-activity">
+        <summary>
+          Atividade da conta <span>Histórico de acessos e operações</span>
+        </summary>
+        <p>
+          Até 1.000 eventos dos últimos 30 dias. Consultas, documentos, senhas e URIs não entram
+          neste histórico.
+        </p>
+        <ol className="activity-list" aria-label="Atividade da conta" tabIndex={0}>
+          {events.map((event) => (
+            <li key={event.id}>
+              <time dateTime={new Date(event.createdAt).toISOString()}>
+                {new Date(event.createdAt).toLocaleString('pt-BR')}
+              </time>
+              <code>
+                {event.action && `${event.action} · `}
+                {event.method} {event.route}
+              </code>
+              {event.databaseName && (
+                <span>
+                  {event.databaseName} / {event.collectionName}
+                </span>
+              )}
+              <span>HTTP {event.status}</span>
+            </li>
+          ))}
+        </ol>
+        {before && (
+          <button className="secondary" disabled={busy} onClick={more}>
+            Carregar eventos anteriores
+          </button>
+        )}
+      </details>
       <div className="account-danger">
         <h3>Excluir sua conta</h3>
         <p>

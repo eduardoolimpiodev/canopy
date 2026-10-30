@@ -7,6 +7,7 @@ export interface UserRow {
   email: string;
   name: string;
   password: string;
+  avatar: string | null;
   email_verified_at: number | null;
 }
 export interface SessionRow {
@@ -64,6 +65,8 @@ export class Store {
       CREATE INDEX IF NOT EXISTS audit_owner ON audit_events(user_id, id DESC);
     `);
     const columns = this.db.prepare('PRAGMA table_info(users)').all();
+    if (!columns.some((column) => column.name === 'avatar'))
+      this.db.exec('ALTER TABLE users ADD COLUMN avatar TEXT');
     if (!columns.some((column) => column.name === 'email_verified_at'))
       this.db.exec('ALTER TABLE users ADD COLUMN email_verified_at INTEGER');
     if (

@@ -55,6 +55,7 @@ export async function accountRoutes(
       id: user.id,
       email: user.email,
       name: user.name,
+      avatar: user.avatar,
       emailVerified: user.email_verified_at !== null,
     };
   }
@@ -132,6 +133,23 @@ export async function accountRoutes(
   }
 
   app.get('/api/auth/options', async () => ({ emailFlowsAvailable }));
+  app.patch('/api/account/profile', async (request) => {
+    const input = z
+      .object({
+        name: z.string().trim().min(2).max(60),
+        avatar: z
+          .string()
+          .max(90000)
+          .regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/)
+          .nullable(),
+      })
+      .strict()
+      .parse(request.body);
+    store.db
+      .prepare('UPDATE users SET name = ?, avatar = ? WHERE id = ?')
+      .run(input.name, input.avatar, request.identity!.user_id);
+    return { user: publicUser(store.user(request.identity!.user_id)!) };
+  });
   app.post('/api/auth/register', { config: authLimit }, async (request, reply) => {
     requireEmailDelivery();
     const input = credentials
