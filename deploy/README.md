@@ -39,7 +39,7 @@ Abra `http://localhost:4312`. A origem inclui a porta; outro endereço exige con
 
 ## Produção
 
-O serviço está publicado em https://canopy.eduardoolimpio.com/. A configuração privada define `NODE_ENV=production`, `APP_ORIGIN=https://canopy.eduardoolimpio.com`, `MAIL_MODE=disabled` e `TRUSTED_PROXY_CIDRS=172.18.0.4`, o IP observado do proxy. Produção rejeita HTTP, e-mail em arquivo e exceções de rede MongoDB privada. A confirmação das contas existentes continua exigindo link válido e senha; novos cadastros, recuperação e reenvio ficam indisponíveis até configurar SMTP.
+O serviço está publicado em https://canopy.eduardoolimpio.com/. A configuração privada define `NODE_ENV=production`, `APP_ORIGIN=https://canopy.eduardoolimpio.com`, `MAIL_MODE=smtp` e `TRUSTED_PROXY_CIDRS=172.18.0.4`, o IP observado do proxy. Produção rejeita HTTP, e-mail em arquivo e exceções de rede MongoDB privada. A confirmação das contas existentes continua exigindo link válido e senha; novos cadastros, recuperação e reenvio estão habilitados.
 
 `production.compose.env` aponta para a imagem imutável registrada em [STATUS.md](STATUS.md), `CANOPY_ENV_FILE=/opt/canopy/shared/production.app.env` e `CANOPY_BIND_PORT=4313`. A ativação usa os dois manifestos:
 
@@ -49,7 +49,7 @@ docker compose --project-name canopy --env-file /opt/canopy/shared/production.co
 
 A rede externa `proxy-network` fornece o alias `canopy-api`. O virtual host sobrescreve os cabeçalhos de encaminhamento; a aplicação confia somente no proxy configurado. Se o IP do proxy mudar, confira o novo IP e atualize a configuração privada antes de recriar o serviço. O Nginx resolve o alias Docker dinamicamente.
 
-Antes de abrir novos cadastros, validar SMTP externo, regras de saída no host, prazo de resolução SRV/TXT e operação recorrente de backups. O snapshot inicial já foi restaurado e conferido em diretório separado; backup recorrente e externo permanece pendente.
+SMTP externo e cadastro completo foram validados. Permanecem pendentes regras de saída no host, prazo de resolução SRV/TXT e operação recorrente de backups. O snapshot inicial já foi restaurado e conferido em diretório separado; backup recorrente e externo permanece pendente.
 
 O servidor já usa o contêiner `nginx-proxy`, com configurações em `/apps/nginx/conf.d`. Acrescentar somente o virtual host aprovado, testar `nginx -t` e então recarregar o proxy. Não instalar outro serviço nas portas 80/443 e não reiniciar os demais projetos. A rede e a confiança no proxy precisam ser configuradas e verificadas antes de tornar a API acessível por ele.
 
@@ -57,9 +57,9 @@ O servidor já usa o contêiner `nginx-proxy`, com configurações em `/apps/ngi
 
 A HostGator oferece Titan com SMTP, mas a contratação da VPS não comprova licença nem caixa ativa. Em 29/10/2026, os registros MX públicos de `eduardoolimpio.com` apontavam para `mx1.titan.email` e `mx2.titan.email`; isso comprova somente o apontamento DNS. Não trocar o registro A do Canopy para configurar e-mail.
 
-A conexão SMTP da VPS com `smtp.titan.email:465` foi validada com cadeia e hostname TLS e resposta EHLO 250. Esse teste não autenticou conta nem enviou mensagem.
+A conexão SMTP da VPS com `smtp.titan.email:465` foi validada com cadeia e hostname TLS e resposta EHLO 250. Em 30/10/2026, após habilitar aplicativos externos no Titan, a autenticação passou e uma confirmação foi recebida e consumida no teste público.
 
-No Portal do Cliente, acessar E-mails, Gerenciar e-mails do domínio, Contas de e-mail e Criar nova conta de e-mail. O proprietário informou a criação de `contato@seutime.online`; os MX desse domínio também apontam para o Titan. A autenticação dessa caixa ainda depende da credencial privada. Habilitar a caixa para uso em aplicativos externos no painel Titan. Conferir os registros de autenticação exigidos pelo painel; não substituir configurações de correio existentes sem conferir o uso atual.
+No Portal do Cliente, acessar E-mails, Gerenciar e-mails do domínio, Contas de e-mail e Criar nova conta de e-mail. O proprietário informou a criação de `contato@seutime.online`; os MX desse domínio também apontam para o Titan. A caixa está habilitada para aplicativos externos e autenticada na VPS com credencial privada. Conferir os registros de autenticação exigidos pelo painel; não substituir configurações de correio existentes sem conferir o uso atual.
 
 Configurar diretamente no arquivo privado da VPS, sem incluir a senha no Git ou em mensagens:
 

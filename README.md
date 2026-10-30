@@ -1,8 +1,8 @@
 # Canopy — MongoDB Workbench
 
-Primeira versão web de um workspace MongoDB com cadastro, login e conexões privadas por usuário. Aplicação publicada na VPS, com acesso restrito aos cadastros existentes enquanto SMTP está pendente.
+Primeira versão web de um workspace MongoDB com cadastro, login e conexões privadas por usuário. Aplicação publicada na VPS, com cadastro e confirmação por e-mail via Titan.
 
-A aplicação está em https://canopy.eduardoolimpio.com/ com HTTPS válido e login verificado. Consulte o [estado observado](deploy/STATUS.md) e as [instruções de operação](deploy/README.md). SMTP e abertura de novos cadastros continuam pendentes.
+A aplicação está em https://canopy.eduardoolimpio.com/ com HTTPS válido e login verificado. Consulte o [estado observado](deploy/STATUS.md) e as [instruções de operação](deploy/README.md). SMTP e cadastro completo foram verificados em produção em 30/10/2026.
 
 ## Meta de paridade
 
@@ -40,7 +40,7 @@ Contas novas e contas anteriores precisam confirmar o e-mail antes de acessar co
 
 Em desenvolvimento, `MAIL_MODE=file` grava os e-mails em `.data/mail/` (ou `DATA_DIR/mail`), fora do Git e sem endpoint público para ler links. Abra o arquivo JSON correspondente ao seu endereço e use o link de confirmação, informando a senha escolhida no cadastro. O link expira em 24 horas. A recuperação fica em **Esqueci minha senha**, com link válido por 30 minutos; ela encerra todas as sessões e exige novo login. Links são de uso único, ficam no fragmento da URL e são removidos da barra após captura. A tabela de tokens guarda hashes; o conteúdo de e-mails pendentes usa AES-GCM com vínculo à conta e à entrega.
 
-Para enviar e-mails em produção, configure `MAIL_MODE=smtp`, `SMTP_HOST` e um `MAIL_FROM` autorizado pelo provedor. Use `SMTP_PORT=587`/`SMTP_TLS=starttls`, ou porta 465/`SMTP_TLS=tls`; `SMTP_USER` e `SMTP_PASSWORD` devem ser fornecidos juntos. O Compose da raiz exige credenciais SMTP. Os manifestos da VPS também permitem `MAIL_MODE=disabled`: login e confirmação por link inicial continuam disponíveis, mas cadastro, recuperação e reenvio ficam indisponíveis explicitamente. Produção rejeita e-mail em arquivo. Conexão SMTP TLS não pode ser desativada e certificados inválidos falham. Os detalhes seguem o [transporte SMTP oficial do Nodemailer](https://nodemailer.com/smtp). Nenhum provedor externo foi configurado ou validado nesta entrega.
+Para enviar e-mails em produção, configure `MAIL_MODE=smtp`, `SMTP_HOST` e um `MAIL_FROM` autorizado pelo provedor. Use `SMTP_PORT=587`/`SMTP_TLS=starttls`, ou porta 465/`SMTP_TLS=tls`; `SMTP_USER` e `SMTP_PASSWORD` devem ser fornecidos juntos. O Compose da raiz exige credenciais SMTP. Os manifestos da VPS também permitem `MAIL_MODE=disabled`: login e confirmação por link inicial continuam disponíveis, mas cadastro, recuperação e reenvio ficam indisponíveis explicitamente. Produção rejeita e-mail em arquivo. Conexão SMTP TLS não pode ser desativada e certificados inválidos falham. Os detalhes seguem o [transporte SMTP oficial do Nodemailer](https://nodemailer.com/smtp). O Titan está configurado em produção, com autenticação TLS e recebimento real de confirmação verificados.
 
 O envio usa fila persistida, com uma execução por instância e até três tentativas totais; após falhas, os intervalos são de um e dois minutos. O reenvio de link tem intervalo mínimo de um minuto por conta/finalidade. O endpoint público de recuperação responde com o mesmo recibo para endereço existente ou ausente; isso confirma o registro da solicitação, não a entrega do e-mail. Falhas registram identificação da entrega e códigos seguros de protocolo, sem destinatário, corpo, senha ou link nos logs. O estado de envio da confirmação pode ser atualizado na tela; uma fila em estado final `failed` exige correção do operador e nova solicitação. O endpoint de saúde confirma HTTP disponível, sem certificar SMTP.
 
@@ -90,7 +90,7 @@ Mutações validam a origem exata de `APP_ORIGIN`; após autenticação também 
 
 `Dockerfile` e `compose.yml` preparam uma instância sem root, com volume persistente e retenção de logs. Para produção, configure `.env` com `APP_ORIGIN=https://seu-dominio`, chave e **IPs/CIDRs exatos dos proxies confiáveis** em `TRUSTED_PROXY_CIDRS`; depois execute `docker compose up --build -d` atrás de um terminador HTTPS. A porta fica vinculada a loopback. Não confie indiscriminadamente em `X-Forwarded-For`: proxies desconhecidos são ignorados. Sem configurar o proxy correto, visitantes compartilharão o limitador de IP do proxy.
 
-O serviço foi publicado na VPS com domínio/HTTPS e login verificados. Antes de cadastro público irrestrito, faltam validar SMTP externo, operar backups recorrentes e externos com retenção, limitar o DNS SRV/TXT e proteger a saída na rede do host. O backup inicial teve integridade e restauração separada verificadas. A evolução para múltiplas instâncias segue pendente; a fila e os limitadores desta entrega permanecem locais à instância.
+O serviço foi publicado na VPS com domínio/HTTPS e login verificados. Cadastro público e confirmação via SMTP Titan foram validados. Permanecem pendentes backups recorrentes e externos com retenção, limite de prazo do DNS SRV/TXT e proteção de saída na rede do host. O backup inicial teve integridade e restauração separada verificadas. A evolução para múltiplas instâncias segue pendente; a fila e os limitadores desta entrega permanecem locais à instância.
 
 ## Prova
 
