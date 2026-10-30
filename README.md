@@ -34,6 +34,8 @@ Para desenvolver com recarga automática, use `npm run dev` e abra <http://local
 
 ## Confirmação, recuperação e e-mail
 
+As seções de acesso têm links diretos: `/#/entrar`, `/#/criar-conta` e `/#/recuperar-senha`. Criar conta exige nome, e-mail, senha de 12 a 128 caracteres e repetição da senha. A seção permanece visível quando o envio de e-mails está indisponível, explica a pendência e bloqueia o envio do formulário; o servidor também preserva esse bloqueio. Voltar e avançar no navegador restaura a seção correspondente, sem conservar os campos de senha entre formulários.
+
 Contas novas e contas anteriores precisam confirmar o e-mail antes de acessar conexões MongoDB. A migração acrescenta `email_verified_at` e preserva usuários, hashes de senha, sessões, conexões e consultas existentes. A tela oferece reenvio; contas anteriores não recebem uma confirmação automática sem solicitação.
 
 Em desenvolvimento, `MAIL_MODE=file` grava os e-mails em `.data/mail/` (ou `DATA_DIR/mail`), fora do Git e sem endpoint público para ler links. Abra o arquivo JSON correspondente ao seu endereço e use o link de confirmação, informando a senha escolhida no cadastro. O link expira em 24 horas. A recuperação fica em **Esqueci minha senha**, com link válido por 30 minutos; ela encerra todas as sessões e exige novo login. Links são de uso único, ficam no fragmento da URL e são removidos da barra após captura. A tabela de tokens guarda hashes; o conteúdo de e-mails pendentes usa AES-GCM com vínculo à conta e à entrega.

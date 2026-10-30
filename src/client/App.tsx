@@ -115,6 +115,13 @@ function Modal({
   );
 }
 
+type AuthMode = 'login' | 'register' | 'forgot';
+function readAuthMode(): AuthMode {
+  if (window.location.hash === '#/criar-conta') return 'register';
+  if (window.location.hash === '#/recuperar-senha') return 'forgot';
+  return 'login';
+}
+
 function AuthScreen({
   onLogin,
   initialError,
@@ -122,13 +129,24 @@ function AuthScreen({
   onLogin: (user: User) => void;
   initialError: string;
 }) {
-  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
+  const [mode, setMode] = useState(readAuthMode);
   const register = mode === 'register';
   const forgot = mode === 'forgot';
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(initialError);
   const [emailFlowsAvailable, setEmailFlowsAvailable] = useState<boolean | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    const changed = () => {
+      setMode(readAuthMode());
+      setError('');
+      setNotice('');
+      heading.current?.focus();
+    };
+    window.addEventListener('hashchange', changed);
+    return () => window.removeEventListener('hashchange', changed);
+  }, []);
   useEffect(() => {
     const abort = new AbortController();
     api<{ emailFlowsAvailable: boolean }>('/auth/options', 'GET', undefined, abort.signal)
@@ -141,8 +159,17 @@ function AuthScreen({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    setBusy(true);
     setError('');
+    setNotice('');
+    if (mode !== 'login' && emailFlowsAvailable !== true) {
+      setError('O serviço de e-mail precisa estar disponível para concluir esta solicitação.');
+      return;
+    }
+    if (register && form.get('password') !== form.get('confirmation')) {
+      setError('As senhas devem ser iguais.');
+      return;
+    }
+    setBusy(true);
     try {
       if (forgot) {
         const result = await api<{ message: string }>('/auth/forgot-password', 'POST', {
@@ -168,17 +195,25 @@ function AuthScreen({
       setBusy(false);
     }
   }
+  let emailAvailabilityNotice = 'Consultando a disponibilidade do serviço de e-mail…';
+  if (emailFlowsAvailable === false)
+    emailAvailabilityNotice =
+      'O envio de e-mails ainda não está disponível nesta instalação. A criação de contas e a recuperação de senha serão liberadas quando esse serviço estiver configurado.';
+  if (emailFlowsAvailable === true)
+    emailAvailabilityNotice = forgot
+      ? 'Solicite um link para redefinir sua senha. Confira também a pasta de spam.'
+      : 'Após o cadastro, confirme o e-mail para liberar o acesso aos seus bancos.';
   return (
     <main className="auth-page">
       <section className="auth-story">
         <Brand light />
         <div className="story-content">
           <span className="eyebrow">SEU MONGODB. SEU ESPAÇO.</span>
-          <h1>
+          <h2>
             Explore os dados.
             <br />
             <span>Encontre as respostas.</span>
-          </h1>
+          </h2>
           <p>
             Um espaço de trabalho para conectar, consultar e entender seus bancos. Direto do
             navegador.
@@ -226,21 +261,34 @@ function AuthScreen({
           <div className="auth-icon">
             <TerminalSquare size={25} />
           </div>
-          <h2>
+          <nav className="auth-navigation" aria-label="Acesso à conta">
+            <a href="#/entrar" aria-current={mode === 'login' ? 'page' : undefined}>
+              Entrar
+            </a>
+            <a href="#/criar-conta" aria-current={register ? 'page' : undefined}>
+              Criar conta
+            </a>
+          </nav>
+          <h1 ref={heading} tabIndex={-1}>
             {forgot
               ? 'Vamos recuperar sua conta.'
               : register
                 ? 'Seu novo workspace começa aqui.'
                 : 'Bom ter você por aqui.'}
-          </h2>
+          </h1>
           <p>
             {forgot
               ? 'Receba um link para escolher uma nova senha.'
               : register
-                ? 'Crie sua conta e conecte seu primeiro banco.'
+                ? 'Crie seu acesso com e-mail e senha. Depois, confirme seu e-mail para conectar seus bancos.'
                 : 'Entre para continuar de onde parou.'}
           </p>
-          <form onSubmit={submit}>
+          {mode !== 'login' && (
+            <div className="auth-availability" role="status">
+              {emailAvailabilityNotice}
+            </div>
+          )}
+          <form key={mode} onSubmit={submit} aria-busy={busy}>
             {register && (
               <label>
                 Seu nome
@@ -279,9 +327,26 @@ function AuthScreen({
                 />
               </label>
             )}
+            {register && (
+              <label>
+                Confirmar senha
+                <input
+                  type="password"
+                  name="confirmation"
+                  autoComplete="new-password"
+                  placeholder="Repita sua senha"
+                  minLength={12}
+                  maxLength={128}
+                  required
+                />
+              </label>
+            )}
             {error && <ErrorBanner>{error}</ErrorBanner>}
             {notice && <p role="status">{notice}</p>}
-            <button className="primary auth-submit" disabled={busy}>
+            <button
+              className="primary auth-submit"
+              disabled={busy || (mode !== 'login' && emailFlowsAvailable !== true)}
+            >
               {busy ? (
                 <Spinner />
               ) : (
@@ -296,39 +361,17 @@ function AuthScreen({
               )}
             </button>
           </form>
-          {emailFlowsAvailable === false && (
-            <p role="status">
-              Novos cadastros e recuperação de senha estão temporariamente indisponíveis. Entre com
-              sua conta existente.
-            </p>
-          )}
-          {mode === 'login' && emailFlowsAvailable === true && (
-            <button
-              className="text-button auth-recovery"
-              onClick={() => {
-                setMode('forgot');
-                setError('');
-                setNotice('');
-              }}
-            >
+          {mode === 'login' && (
+            <a className="text-button auth-recovery" href="#/recuperar-senha">
               Esqueci minha senha
-            </button>
+            </a>
           )}
-          {emailFlowsAvailable === true && (
-            <p className="auth-switch">
-              {register ? 'Já tem uma conta?' : 'Primeira vez por aqui?'}{' '}
-              <button
-                className="text-button"
-                onClick={() => {
-                  setMode(register || forgot ? 'login' : 'register');
-                  setError('');
-                  setNotice('');
-                }}
-              >
-                {register || forgot ? 'Entrar' : 'Criar conta'}
-              </button>
-            </p>
-          )}
+          <p className="auth-switch">
+            {register || forgot ? 'Já tem uma conta?' : 'Primeira vez por aqui?'}{' '}
+            <a className="text-button" href={register || forgot ? '#/entrar' : '#/criar-conta'}>
+              {register || forgot ? 'Entrar' : 'Criar conta'}
+            </a>
+          </p>
           <div className="auth-note">
             <LockKeyhole size={16} />
             <p>

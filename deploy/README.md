@@ -44,7 +44,7 @@ O serviço está publicado em https://canopy.eduardoolimpio.com/. A configuraç�
 `production.compose.env` aponta para a imagem imutável registrada em [STATUS.md](STATUS.md), `CANOPY_ENV_FILE=/opt/canopy/shared/production.app.env` e `CANOPY_BIND_PORT=4313`. A ativação usa os dois manifestos:
 
 ```sh
-docker compose --project-name canopy --env-file /opt/canopy/shared/production.compose.env -f /opt/canopy/releases/20261029-public-ready/compose.vps.yml -f /opt/canopy/releases/20261029-public-ready/compose.public.yml up --detach --no-build --wait --wait-timeout 60
+docker compose --project-name canopy --env-file /opt/canopy/shared/production.compose.env -f /opt/canopy/releases/20261030-registration/compose.vps.yml -f /opt/canopy/releases/20261030-registration/compose.public.yml up --detach --no-build --wait --wait-timeout 60
 ```
 
 A rede externa `proxy-network` fornece o alias `canopy-api`. O virtual host sobrescreve os cabeçalhos de encaminhamento; a aplicação confia somente no proxy configurado. Se o IP do proxy mudar, confira o novo IP e atualize a configuração privada antes de recriar o serviço. O Nginx resolve o alias Docker dinamicamente.
@@ -52,6 +52,30 @@ A rede externa `proxy-network` fornece o alias `canopy-api`. O virtual host sobr
 Antes de abrir novos cadastros, validar SMTP externo, regras de saída no host, prazo de resolução SRV/TXT e operação recorrente de backups. O snapshot inicial já foi restaurado e conferido em diretório separado; backup recorrente e externo permanece pendente.
 
 O servidor já usa o contêiner `nginx-proxy`, com configurações em `/apps/nginx/conf.d`. Acrescentar somente o virtual host aprovado, testar `nginx -t` e então recarregar o proxy. Não instalar outro serviço nas portas 80/443 e não reiniciar os demais projetos. A rede e a confiança no proxy precisam ser configuradas e verificadas antes de tornar a API acessível por ele.
+
+## Envio pelo Titan da HostGator
+
+A HostGator oferece Titan com SMTP, mas a contratação da VPS não comprova licença nem caixa ativa. Em 29/10/2026, os registros MX públicos de `eduardoolimpio.com` apontavam para `mx1.titan.email` e `mx2.titan.email`; isso comprova somente o apontamento DNS. Não trocar o registro A do Canopy para configurar e-mail.
+
+A conexão SMTP da VPS com `smtp.titan.email:465` foi validada com cadeia e hostname TLS e resposta EHLO 250. Esse teste não autenticou conta nem enviou mensagem.
+
+No Portal do Cliente, acessar E-mails, Gerenciar e-mails do domínio, Contas de e-mail e Criar nova conta de e-mail. O proprietário informou a criação de `contato@seutime.online`; os MX desse domínio também apontam para o Titan. A autenticação dessa caixa ainda depende da credencial privada. Habilitar a caixa para uso em aplicativos externos no painel Titan. Conferir os registros de autenticação exigidos pelo painel; não substituir configurações de correio existentes sem conferir o uso atual.
+
+Configurar diretamente no arquivo privado da VPS, sem incluir a senha no Git ou em mensagens:
+
+```dotenv
+MAIL_MODE=smtp
+MAIL_FROM=contato@seutime.online
+SMTP_HOST=smtp.titan.email
+SMTP_PORT=465
+SMTP_TLS=tls
+SMTP_USER=contato@seutime.online
+SMTP_PASSWORD=<senha-da-caixa-configurada-diretamente-na-VPS>
+```
+
+Manter permissão `0600` e recriar somente o serviço Canopy pelos manifestos de produção. Validar um cadastro e o recebimento real da confirmação, consumo do link com senha e recuperação de conta. Um registro MX ou uma conexão SMTP aceita não prova entrega na caixa final. Se o envio falhar, registrar a causa segura e manter a indisponibilidade declarada, sem usar e-mail em arquivo em produção.
+
+Instruções oficiais consultadas: [disponibilidade do Titan](https://suporte.hostgator.com.br/hc/pt-br/articles/30818814009619-Principais-d%C3%BAvidas-sobre-o-e-mail-Titan), [criar caixa](https://suporte.hostgator.com.br/hc/pt-br/articles/30807253108883-Como-criar-uma-conta-de-e-mail-profissional-com-o-Titan), [habilitar uso externo](https://suporte.hostgator.com.br/hc/pt-br/articles/30807156866067-Como-habilitar-o-e-mail-Titan-para-uso-externo) e [SMTP com SSL/TLS na porta 465](https://suporte.hostgator.com.br/hc/pt-br/articles/30813560087571-Como-enviar-e-receber-e-mails-Titan-por-aplicativos-externos).
 
 ## HTTPS do domínio Canopy
 

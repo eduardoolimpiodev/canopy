@@ -4,10 +4,10 @@
 
 | Item                 | Estado observado                                                                                                |
 | -------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Versão               | `20261029-public-ready`                                                                                         |
-| Imagem               | `sha256:e38e14305e697104f36810fe0aa2dfbe1b482ff6aa6d700471a57588f571aa5f`                                       |
-| Pacote SHA-256       | `4cbbfc364d7b04aba97124feb466120b22211b0d92592e934ee45da99500bb6f`                                              |
-| Release              | `/opt/canopy/releases/20261029-public-ready`                                                                    |
+| Versão               | `20261030-registration`                                                                                         |
+| Imagem               | `sha256:cbe830babf0fde398225a1e0c7df1142ab29c657f3650741fe1dd2d60a83eee9`                                       |
+| Pacote SHA-256       | `a7686ed467722c93380358cad26653d255c57238d940245152a4ba3667adb6de`                                              |
+| Release              | `/opt/canopy/releases/20261030-registration`                                                                    |
 | Contêiner            | `canopy-canopy-1`, saudável                                                                                     |
 | Rede e volume        | `proxy-network` e `canopy_canopy-data`                                                                          |
 | Porta na VPS         | `127.0.0.1:4313`; proxy acessa o backend na rede Docker                                                         |
@@ -26,6 +26,12 @@ As contas importadas continuam exigindo confirmação com a senha original. Fora
 `npm run check` passou com 25 testes, incluindo MongoDB autenticado, SMTP TLS local, modo de e-mail indisponível e importação inicial real. Após preservar os links na mesma transação da importação, o teste focado e o lint passaram. A versão final também passou no build e na prova de login pelo navegador.
 
 Somente o virtual host Canopy foi alterado no Nginx existente, com `nginx -t` antes do reload. A configuração anterior está em `/opt/canopy/shared/nginx.canopy-before-app.conf`. Os demais projetos e o firewall foram preservados. A prévia SSH anterior continua separada da produção.
+
+A versão `20261030-registration` publica a seção `/#/criar-conta`, com nome, e-mail, senha e confirmação de senha, além dos links diretos para entrar e recuperar senha. A prova local criou uma conta real, recusou senhas divergentes, confirmou o e-mail com senha e abriu o workspace. A revisão independente encontrou uma orientação incorreta na recuperação; ela foi corrigida e conferida no navegador. O formulário passou a ter o título principal também no celular.
+
+Na VPS, o HTML servido foi comparado com a imagem, a seção abriu por HTTPS e as auditorias em desktop e celular retornaram zero violações e zero verificações inconclusivas. O cadastro sem SMTP continua retornando 503. Backend e schema não foram alterados neste incremento. A configuração anterior está em `/opt/canopy/shared/production.compose.before-registration.env`, e a imagem anterior permanece disponível para retorno de versão.
+
+Os registros MX do domínio apontam para o Titan. A VPS conseguiu abrir conexão SMTP TLS validada com `smtp.titan.email:465` e recebeu EHLO 250, sem autenticação nem envio. Caixa ativa, credenciais e entrega real permanecem sem validação.
 
 ## Pendências
 
