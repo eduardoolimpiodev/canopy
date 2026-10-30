@@ -1,0 +1,10 @@
+services:
+  canopy:
+    networks:
+      default:
+        aliases:
+          - canopy-api
+networks:
+  default:
+    name: proxy-network
+    external: true

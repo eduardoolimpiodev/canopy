@@ -1,0 +1,11 @@
+[Unit]
+Description=Verificar duas vezes ao dia a renovação HTTPS do Canopy
+
+[Timer]
+OnCalendar=*-*-* 00,12:00:00
+RandomizedDelaySec=30min
+Persistent=true
+Unit=canopy-cert-renew.service
+
+[Install]
+WantedBy=timers.target

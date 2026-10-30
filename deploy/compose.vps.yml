@@ -1,0 +1,47 @@
+services:
+  canopy:
+    image: ${CANOPY_IMAGE:?Defina a imagem imutável desta versão}
+    init: true
+    restart: unless-stopped
+    env_file:
+      - path: ${CANOPY_ENV_FILE:?Defina o arquivo de configuração privado}
+        required: true
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4310
+      DATA_DIR: /app/data
+    ports:
+      - '127.0.0.1:${CANOPY_BIND_PORT:-4310}:4310'
+    volumes:
+      - canopy-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 768m
+    cpus: 1
+    pids_limit: 128
+    stop_grace_period: 25s
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - --input-type=module
+        - -e
+        - >-
+          const r = await fetch('http://127.0.0.1:4310/api/health', {signal: AbortSignal.timeout(2000)});
+          if (!r.ok || (await r.json()).status !== 'ok') process.exit(1);
+      interval: 30s
+      timeout: 4s
+      start_period: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+volumes:
+  canopy-data:

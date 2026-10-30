@@ -1,0 +1,37 @@
+services:
+  canopy:
+    build: .
+    init: true
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:4310:4310'
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:?Defina a origem HTTPS pública}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Defina a chave de 32 bytes em hexadecimal}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+      MAIL_MODE: smtp
+      MAIL_FROM: ${MAIL_FROM:?Defina o remetente autorizado pelo SMTP}
+      SMTP_HOST: ${SMTP_HOST:?Defina o servidor SMTP}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_TLS: ${SMTP_TLS:-starttls}
+      SMTP_USER: ${SMTP_USER:?Defina o usuário SMTP}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Defina a senha SMTP}
+    volumes:
+      - canopy-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 768m
+    cpus: 2
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+volumes:
+  canopy-data:

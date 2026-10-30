@@ -1,0 +1,10 @@
+[Unit]
+Description=Renovar e verificar o certificado HTTPS do Canopy
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/canopy/shared/renew-canopy-cert.py
+TimeoutStartSec=5min
