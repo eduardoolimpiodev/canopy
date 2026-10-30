@@ -31,7 +31,7 @@ A versão `20261030-registration` publica a seção `/#/criar-conta`, com nome, 
 
 Na VPS, o HTML servido foi comparado com a imagem, a seção abriu por HTTPS e as auditorias em desktop e celular retornaram zero violações e zero verificações inconclusivas. O cadastro sem SMTP continua retornando 503. Backend e schema não foram alterados neste incremento. A configuração anterior está em `/opt/canopy/shared/production.compose.before-registration.env`, e a imagem anterior permanece disponível para retorno de versão.
 
-Os registros MX do domínio apontam para o Titan. A VPS conseguiu abrir conexão SMTP TLS validada com `smtp.titan.email:465` e recebeu EHLO 250, sem autenticação nem envio. Caixa ativa, credenciais e entrega real permanecem sem validação.
+Os registros MX de `eduardoolimpio.com` e `seutime.online` apontam para o Titan. A VPS conseguiu abrir conexão SMTP TLS validada com `smtp.titan.email:465` e recebeu EHLO 250. O proprietário informou a caixa `contato@seutime.online`; uma tentativa de autenticação SMTP foi recusada com EAUTH/535, e uma tentativa no webmail exibiu “E-mail ou senha incorretos”. A configuração de produção permaneceu inalterada, com permissão `0600` e fluxos de e-mail desativados. Nenhuma mensagem foi enviada. Corrigir a credencial da caixa antes de tentar novamente; entrega real permanece pendente.
 
 ## Pendências
 
